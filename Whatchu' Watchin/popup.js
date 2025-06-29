@@ -239,6 +239,24 @@ function searchTMDB(query) {
     });
 }
 
+function getEpisodeDetails(tmdbId, season, episode, callback) {
+  if (!tmdbId || !season || !episode) {
+    callback(null);
+    return;
+  }
+  const url = `https://api.themoviedb.org/3/tv/${tmdbId}/season/${season}/episode/${episode}?api_key=${API_KEY}`;
+  fetch(url)
+    .then(response => {
+      if (!response.ok) return null;
+      return response.json();
+    })
+    .then(data => callback(data))
+    .catch(error => {
+      console.error('Error fetching episode details:', error);
+      callback(null);
+    });
+}
+
 function displaySearchResults(results) {
   hideSearchResults();
   
@@ -559,6 +577,30 @@ function showTVProgressModal(itemId) {
       modal.style.opacity = '1';
       modal.querySelector('div').style.transform = 'scale(1)';
     }, 10);
+
+    // Get references to the input fields
+    const seasonInput = document.getElementById('tvSeason');
+    const episodeInput = document.getElementById('tvEpisode');
+    const episodeSearchInput = document.getElementById('episodeSearch');
+
+    // Create a function to handle the update
+    const updateEpisodeName = () => {
+        const season = parseInt(seasonInput.value);
+        const episode = parseInt(episodeInput.value);
+
+        getEpisodeDetails(item.tmdbId, season, episode, (details) => {
+            if (details && details.name) {
+                episodeSearchInput.value = details.name;
+            } else {
+                // Optionally clear the title field if the episode is not found
+                episodeSearchInput.value = '';
+            }
+        });
+    };
+
+    // Add event listeners to the season and episode inputs
+    seasonInput.addEventListener('input', updateEpisodeName);
+    episodeInput.addEventListener('input', updateEpisodeName);
 
     // Episode search functionality
     let searchTimeout;
